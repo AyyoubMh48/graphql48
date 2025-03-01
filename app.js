@@ -1,18 +1,14 @@
 class ProfileApp {
   constructor() {
     this.token = localStorage.getItem("token");
-    console.log("Token:", this.token);
-
     this.init();
   }
 
   async init() {
     if (!this.token) {
-      console.log("showLoginForm");
       this.showLoginForm();
     } else {
       this.showProfile();
-      console.log("showProfile");
     }
   }
 
@@ -34,7 +30,6 @@ class ProfileApp {
               </div>
           `;
 
-    console.log("Login form rendered");
 
     document
       .getElementById("loginForm")
@@ -53,7 +48,7 @@ class ProfileApp {
         {
           method: "POST",
           headers: {
-            Authorization: `Basic ${btoa(`${identifier}:${password}`)}`,
+            Authorization: `Basic ${btoa(`${identifier}:${password}`)}`, //btoa encodes a string to base-64
           },
         }
       );
@@ -63,7 +58,6 @@ class ProfileApp {
       }
 
       const data = await response.json();
-      console.log("Parsed Data:", data);
 
       this.token = data;
       localStorage.setItem("token", this.token);
@@ -149,6 +143,7 @@ class ProfileApp {
     try {
       const userData = await this.fetchUserData();
       const user = userData.user[0];
+      //      skills return key : type and value : amount 
       const skills = userData.skills.reduce((acc, skill) => {
         if (!(skill.type in acc)) {
           acc[skill.type] = skill.amount;
@@ -156,15 +151,7 @@ class ProfileApp {
         return acc;
       }, {});
       
-      function formatSize(value) {
-        if (value < 1000) {
-          return `${value}B`;
-        } else if (value >= 1000 && value < 1000000) {
-          return `${Math.round(value / 1000)}KB`;  // Round to the nearest KB
-        } else {
-          return `${(value / 1000000).toFixed(2)}MB`;  // Keep the two decimal places for MB
-        }
-      }
+      
 
       container.innerHTML = `
           <div class="container">
@@ -187,7 +174,7 @@ class ProfileApp {
               </div>
               <div class="card audit-ratio-chart">
             <h2>Audit Ratio</h2>
-              <svg id="auditRatioChart" width="300" height="200"></svg>
+              <svg id="auditRatioChart" width="400" height="200"></svg>
             </div>
             </div>
           </div>`;
@@ -195,7 +182,6 @@ class ProfileApp {
       document
         .getElementById("logoutBtn")
         .addEventListener("click", () => this.logout());
-        console.log("Skills Data:", skills);
 
       circularProgressGraph(
         Object.keys(skills).map((e) => e.replace("skill_", "").toUpperCase()),
@@ -218,7 +204,18 @@ class ProfileApp {
       document
         .getElementById("logoutBtn")
         .addEventListener("click", () => this.logout());
+      setTimeout(() => this.logout(), 5000);
     }
+  }
+}
+
+function formatSize(value) {
+  if (value < 1000) {
+    return `${value}B`;
+  } else if (value >= 1000 && value < 1000000) {
+    return `${Math.round(value / 1000)}KB`;  
+  } else {
+    return `${(value / 1000000).toFixed(2)}MB`; 
   }
 }
 
@@ -226,7 +223,7 @@ const circularProgressGraph = (skills, percentages, svg) => {
   const centerX = 200,
     centerY = 200,
     radius = 50;
-  const gap = 140; // Space between circles
+  const gap = 140;    // space between circles
   
 
   skills.forEach((skill, i) => {
@@ -234,8 +231,8 @@ const circularProgressGraph = (skills, percentages, svg) => {
     const y = centerY + Math.floor(i / 3) * gap - gap;
 
     const percentage = percentages[i];
-    const circumference = 2 * Math.PI * radius;
-    const strokeDasharray = `${
+    const circumference = 2 * Math.PI * radius; // mo7it da2ira
+    const strokeDasharray = `${   // nisba % dyal m7it da2ira
       (circumference * percentage) / 100
     } ${circumference}`;
 
@@ -266,7 +263,7 @@ const circularProgressGraph = (skills, percentages, svg) => {
 const createAuditRatioSvg = (totalDown, totalUp, auditRatio, container) => {
   const svg = container;
   const width = 300;
-  const height = 200;
+  // const height = 200;
   const barHeight = 15;
   const barWidth = 250;
   const startX = 70;
@@ -279,11 +276,11 @@ const createAuditRatioSvg = (totalDown, totalUp, auditRatio, container) => {
   const doneWidth = total ? (totalUp / total) * barWidth : 0;
   const receivedWidth = total ? (totalDown / total) * barWidth : 0;
 
-  svg.innerHTML += `
-    <text x="${
-      width / 2
-    }" y="25" text-anchor="middle" font-size="18" fill="white">Audit Ratio</text>
-  `;
+  // svg.innerHTML += `
+  //   <text x="${
+  //     width / 2
+  //   }" y="25" text-anchor="middle" font-size="18" fill="white">Audit Ratio</text>
+  // `;
 
   //       "Done" 
   svg.innerHTML += `
@@ -294,7 +291,7 @@ const createAuditRatioSvg = (totalDown, totalUp, auditRatio, container) => {
     <rect x="${startX}" y="${doneY}" width="${doneWidth}" height="${barHeight}" fill="#1a54ff" rx="3" ry="3" />
     <text x="${startX + doneWidth + 5}" y="${
     doneY + barHeight / 2
-  }" font-size="14" fill="white" dominant-baseline="middle">${totalUp}</text>
+  }" font-size="14" fill="white" dominant-baseline="middle"> ${formatSize(totalUp)}</text>
   `;
 
   //      "Received" 
@@ -306,7 +303,7 @@ const createAuditRatioSvg = (totalDown, totalUp, auditRatio, container) => {
     <rect x="${startX}" y="${receivedY}" width="${receivedWidth}" height="${barHeight}" fill="#b87800" rx="3" ry="3" />
     <text x="${startX + receivedWidth + 5}" y="${
     receivedY + barHeight / 2
-  }" font-size="14" fill="white" dominant-baseline="middle">${totalDown}</text>
+  }" font-size="14" fill="white" dominant-baseline="middle"> ${formatSize(totalDown)}</text>
   `;
 
   // audit ratio value
@@ -319,7 +316,6 @@ const createAuditRatioSvg = (totalDown, totalUp, auditRatio, container) => {
   `;
 };
 
-// Initialize the app
 document.addEventListener("DOMContentLoaded", () => {
   new ProfileApp();
 });
